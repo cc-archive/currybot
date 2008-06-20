@@ -64,7 +64,10 @@ class CurryMenu:
                                    re.S)
 
     def __getitem__(self, item):
-        return self.menu[int(item)]
+        try:
+            return self.menu[int(item)]
+        except ValueError:
+            raise KeyError()
 
     def load(self, url="http://mehfilindian.com/LunchMenuTakeOut.htm"):
 
