@@ -200,15 +200,18 @@ class LogBotFactory(protocol.ClientFactory):
         reactor.stop()
 
 
-if __name__ == '__main__':
+def main(channel='cc', logfile='curry.log'):
     # initialize logging
     log.startLogging(sys.stdout)
     
     # create factory protocol and application
-    f = LogBotFactory(sys.argv[1], sys.argv[2])
+    f = LogBotFactory(channel, logfile)
 
     # connect factory to this host and port
     reactor.connectTCP("irc.freenode.net", 6667, f)
 
     # run bot
     reactor.run()
+
+if __name__ == '__main__':
+    main()
