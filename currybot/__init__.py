@@ -157,6 +157,15 @@ class LogBot(irc.IRCClient):
                 self.msg(channel, "No help here; guess you're SOL.")
                 return
 
+            if command == 'list':
+                try:
+                    for i in range(1,10):
+                        desc, price = self.menu[i]
+                        self.msg(channel, '(%d) %s' % (i, desc))
+                except KeyError:
+                    return
+                return
+
             try:
                 desc, price = self.menu[command]
                 self.msg(channel, desc)
