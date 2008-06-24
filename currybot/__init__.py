@@ -75,9 +75,19 @@ class CurryMenu:
         self._menu_text = BodyText().strip(self._menu)
         
         for item in self.RE_ITEMS.findall(self._menu_text):
-            self.menu[int(item[0])] = (
+            self.menu[int(item[0])] = CurryMenuItem(item)
+
+class CurryMenuItem:
+
+    def __init__(self, item):
+        items = (
                 " ".join([n.strip() for n in item[1].strip().split('\n')]),
                 item[2].strip())
+        self.price = items[1]
+        self.title, remainder = items[0].split('(')
+        self.title = self.title.strip()
+        self.summary, self.desc = remainder.split(')')
+        self.desc = self.desc.strip()
 
 class MessageLogger:
     """
@@ -160,16 +170,18 @@ class LogBot(irc.IRCClient):
             if command == 'list':
                 try:
                     for i in range(1,10):
-                        desc, price = self.menu[i]
-                        self.msg(channel, '(%d) %s' % (i, desc))
+                        item = self.menu[i]
+                        self.msg(channel, '(%d) %s (%s)' %
+                                  (i, item.title, item.summary))
                 except KeyError:
                     return
                 return
 
             try:
-                desc, price = self.menu[command]
-                self.msg(channel, desc)
-                self.msg(channel, price)
+                item = self.menu[command]
+                self.msg(channel, "%s (%s) %s" %
+                          (item.title, item.summary, item.desc))
+                self.msg(channel, item.price)
                 
             except KeyError, e:
                 self.msg(channel, "%s: mmm... curry..." % user)
