@@ -158,7 +158,8 @@ class LogBot(irc.IRCClient):
 
         # Otherwise check to see if it is a message directed at me
         if msg.startswith(self.nickname + " ") or \
-                msg.startswith(self.nickname + ":"):
+                msg.startswith(self.nickname + ":") or \
+                msg.startswith(self.nickname + ","):
 
             # get the "command" portion
             command = msg[len(self.nickname) + 1:].strip()
