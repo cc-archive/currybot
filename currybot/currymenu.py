@@ -55,9 +55,13 @@ class CurryMenuItem:
         items = (
                 " ".join([n.strip() for n in item[1].strip().split('\n')]),
                 item[2].strip())
+
+        # hackishly sanitize
+        # if items[0].count('(') > 1:
+
         self.price = items[1]
-        self.title, remainder = items[0].split('(')
+        self.title, remainder = items[0].split('(', 1)
         self.title = self.title.strip()
-        self.summary, self.desc = remainder.split(')')
+        self.summary, self.desc = remainder.split(')', 1)
         self.desc = self.desc.strip()
 

@@ -28,8 +28,8 @@ setup(
     # scripts and dependencies
     # note that we depend upon Twisted but it doesn't play nice with setuptools
     install_requires = ['setuptools',
-                        #'zope.interface',
-                        #'Twisted',
+                        'zope.interface',
+                        'Twisted',
                         ],
 
     entry_points = { 'console_scripts':

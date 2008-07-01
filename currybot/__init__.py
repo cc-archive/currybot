@@ -2,92 +2,16 @@
 # See LICENSE for details.
 
 
-"""An example IRC log bot - logs a channel's events to a file.
-
-If someone says the bot's name in the channel followed by a ':',
-e.g.
-
-  <foo> logbot: hello!
-
-the bot will reply:
-
-  <logbot> foo: I am a log bot
-
-Run this script with two arguments, the channel name the bot should
-connect to, and file to log to, e.g.:
-
-  $ python ircLogBot.py test test.log
-
-will log channel #test to the file 'test.log'.
-"""
-
-
 # twisted imports
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from twisted.python import log
 
-import urllib2
-import sgmllib
-import re
 import time, sys
+import os
+import cPickle as pickle
 
-class BodyText(sgmllib.SGMLParser):
-    def __init__(self):
-        sgmllib.SGMLParser.__init__(self)
-        
-        self.in_body = False
-        
-    def start_body(self, attrs):
-        self.in_body = True
-
-    def end_body(self):
-        self.in_body = False
-
-    def strip(self, some_html):
-        self.theString = ""
-        self.feed(some_html)
-        self.close()
-        return self.theString
-		
-    def handle_data(self, data):
-        if self.in_body:
-            self.theString += data
-
-
-class CurryMenu:
-
-    def __init__(self):
-        self.menu = {}
-
-        self.RE_ITEMS = re.compile(r'\(([0-9])\)(.*?)(\$\W*[0-9]\.[0-9][0-9])',
-                                   re.S)
-
-    def __getitem__(self, item):
-        try:
-            return self.menu[int(item)]
-        except ValueError:
-            raise KeyError()
-
-    def load(self, url="http://mehfilindian.com/LunchMenuTakeOut.htm"):
-
-        self._menu = urllib2.urlopen(url).read()
-        self._menu_text = BodyText().strip(self._menu)
-        
-        for item in self.RE_ITEMS.findall(self._menu_text):
-            self.menu[int(item[0])] = CurryMenuItem(item)
-
-class CurryMenuItem:
-
-    def __init__(self, item):
-        items = (
-                " ".join([n.strip() for n in item[1].strip().split('\n')]),
-                item[2].strip())
-        self.price = items[1]
-        self.title, remainder = items[0].split('(')
-        self.title = self.title.strip()
-        self.summary, self.desc = remainder.split(')')
-        self.desc = self.desc.strip()
+from currybot.currymenu import CurryMenu
 
 class MessageLogger:
     """
@@ -109,8 +33,22 @@ class MessageLogger:
 
 class LogBot(irc.IRCClient):
     """A logging IRC bot."""
-    
-    nickname = "currybot"
+
+    def __init__(self):
+        self.nickname = "currybot"
+        self.fn = "data.txt"
+        if os.path.exists(self.fn):
+            f = open(self.fn, 'rb')
+            self.curryites = pickle.load(f)
+            f.close()
+        else:
+            self.curryites = {}
+
+    def _write_data(self):
+        f = open(self.fn, 'wb')
+        pickle.dump(self.curryites, f, 2)
+        f.flush()
+        f.close()
     
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
@@ -158,7 +96,8 @@ class LogBot(irc.IRCClient):
 
         # Otherwise check to see if it is a message directed at me
         if msg.startswith(self.nickname + " ") or \
-                msg.startswith(self.nickname + ":"):
+                msg.startswith(self.nickname + ":" or \
+                msg.startswith(self.nickname + ",")):
 
             # get the "command" portion
             command = msg[len(self.nickname) + 1:].strip()
@@ -175,6 +114,47 @@ class LogBot(irc.IRCClient):
                                   (i, item.title, item.summary))
                 except KeyError:
                     return
+                return
+
+            if command == 'register':
+                if self.curryites.has_key(user):
+                    self.msg(channel, "%s is already a curryite!" % user)
+                    return
+                self.curryites[user] = None
+                self.msg(channel, "%s has been registered as a curryite." %
+                                                user)
+                self._write_data()
+                return
+
+            if command == 'unregister':
+                if self.curryites.has_key(user):
+                    self.curryites.pop(user)
+                    self.msg(channel, "%s is no longer a curryite." %
+                                                user)
+                else:
+                    self.msg(channel, "%s wasn't a curryite to begin with!" % 
+                                                user)
+                self._write_data()
+                return
+
+            if command == 'curryites':
+                # what a mess...
+                if len(self.curryites) == 0:
+                    self.msg(channel, "There is no curry cabal.")
+                elif len(self.curryites) == 1:
+                    self.msg(channel,
+                        "%s is the only member of the curry cabal." %
+                        self.curryites.keys()[0])
+                elif len(self.curryites) == 2:
+                    self.msg(channel,
+                        "%s are members of the curry cabal." %
+                        ' and '.join(self.curryites.keys()))
+                else:
+                    self.msg(channel,
+                        "%s%s%s are members of the curry cabal." %
+                       (', '.join(self.curryites.keys()[:-1]),
+                        ', and ',
+                        self.curryites.keys()[-1] ))
                 return
 
             try:
