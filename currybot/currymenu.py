@@ -56,12 +56,28 @@ class CurryMenuItem:
                 " ".join([n.strip() for n in item[1].strip().split('\n')]),
                 item[2].strip())
 
-        # hackishly sanitize
-        # if items[0].count('(') > 1:
+        # TODO: use regexes for scraping, or otherwise make this pretty
+        count_parens = items[0].count('(')
+        if count_parens == 0:
+            self.price = items[1]
+            self.desc = items[0]
+            self.summary = 'NONE'
+            self.title = "Couldn't parse"
 
-        self.price = items[1]
-        self.title, remainder = items[0].split('(', 1)
-        self.title = self.title.strip()
-        self.summary, self.desc = remainder.split(')', 1)
-        self.desc = self.desc.strip()
+        elif count_parens == 1:
+            self.price = items[1]
+            self.title, remainder = items[0].split('(')
+            self.title = self.title.strip()
+            self.summary, self.desc = remainder.split(')')
+            self.desc = self.desc.strip()
+
+        elif count_parens == 2:
+            self.price = items[1]
+            self.title, remainder = items[0].split('(', 1)
+            self.title = self.title.strip()
+            self.summary, self.desc = remainder.split(')', 1)
+            self.desc = self.desc.strip()
+
+        else:
+            print "More than 2 parens, wtf?"
 

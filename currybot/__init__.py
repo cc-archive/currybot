@@ -159,8 +159,11 @@ class LogBot(irc.IRCClient):
 
             try:
                 item = self.menu[command]
-                self.msg(channel, "%s (%s) %s" %
-                          (item.title, item.summary, item.desc))
+                if item.summary == 'NONE':
+                    self.msg(channel, item.desc)
+                else:
+                    self.msg(channel, "%s (%s) %s" %
+                              (item.title, item.summary, item.desc))
                 self.msg(channel, item.price)
                 
             except KeyError, e:
