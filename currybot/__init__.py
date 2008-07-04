@@ -1,6 +1,3 @@
-# Copyright (c) 2001-2004 Twisted Matrix Laboratories.
-# See LICENSE for details.
-
 
 # twisted imports
 from twisted.words.protocols import irc
@@ -207,7 +204,7 @@ class LogBotFactory(protocol.ClientFactory):
         reactor.stop()
 
 
-def main(channel='cc', logfile='curry.log'):
+def start_bot(channel, logfile='curry.log'):
     # initialize logging
     log.startLogging(sys.stdout)
     
@@ -220,5 +217,8 @@ def main(channel='cc', logfile='curry.log'):
     # run bot
     reactor.run()
 
-if __name__ == '__main__':
-    main()
+def run():
+    start_bot(channel='cc')
+
+def run_dev():
+    start_bot(channel='cc-currybot', logfile='currydev.log')
