@@ -1,0 +1,23 @@
+
+== Must have ==
+* currybot has some concept of time, capable of acting like cron
+  - use both 1) irc events and 2) signal module
+
+* currybot can have rudimentary conversations
+  - remind you when it's almost curry time
+  - accept responses about whether you're going to get curry
+  - remembers what you said you were going to get
+  - asks you how you liked it, and remembers
+
+* currybot conversations are in some awesome dialect or style
+
+* intelligent parsing of curry menu
+  - possibly use regexes
+
+== Nice to have ==
+* server runs in a shell for nicer starting / stopping / reloading
+
+* functional and unit test suite
+
+== Optional ==
+* remove logging functionality, or only log "important" things
