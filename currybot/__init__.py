@@ -4,7 +4,7 @@ from twisted.python import log
 
 import sys
 
-from currybot.irc import *
+from currybot.irc import BotFactory
 
 
 def start_bot(channel, logfile='curry.log'):
@@ -12,7 +12,7 @@ def start_bot(channel, logfile='curry.log'):
     log.startLogging(sys.stdout)
     
     # create factory protocol and application
-    f = LogBotFactory(channel, logfile)
+    f = BotFactory(channel, logfile)
 
     # connect factory to this host and port
     reactor.connectTCP("irc.freenode.net", 6667, f)

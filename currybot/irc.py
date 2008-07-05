@@ -9,12 +9,6 @@ import cPickle as pickle
 
 from currybot.currymenu import CurryMenu
 
-
-__all__ = [
-           'LogBot',
-           'LogBotFactory',
-          ]
-
 class MessageLogger:
     """
     An independent logger class (because separation of application
@@ -33,29 +27,15 @@ class MessageLogger:
         self.file.close()
 
 
-class LogBot(irc.IRCClient):
-    """A logging IRC bot."""
+class BasicBot(irc.IRCClient):
+    """A basic IRC bot. Provides minimal non-curry-related functions,
+       like some logging. Curry-related functionality belongs in
+       a derived class."""
 
-    def __init__(self):
-        self.nickname = "currybot"
-        self.fn = "data.txt"
-        if os.path.exists(self.fn):
-            f = open(self.fn, 'rb')
-            self.curryites = pickle.load(f)
-            f.close()
-        else:
-            self.curryites = {}
-
-    def _write_data(self):
-        f = open(self.fn, 'wb')
-        pickle.dump(self.curryites, f, 2)
-        f.flush()
-        f.close()
-    
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
         self.logger = MessageLogger(open(self.factory.filename, "a"))
-        self.logger.log("[connected at %s]" % 
+        self.logger.log("[connected at %s]" %
                         time.asctime(time.localtime(time.time())))
 
     def connectionLost(self, reason):
@@ -63,17 +43,6 @@ class LogBot(irc.IRCClient):
         self.logger.log("[disconnected at %s]" %
                         time.asctime(time.localtime(time.time())))
         self.logger.close()
-
-    @property
-    def menu(self):
-
-        try:
-            return self._menu
-        except AttributeError, e:
-            self._menu = CurryMenu()
-            self._menu.load()
-
-        return self._menu
 
     #def action(self, user, channel, msg):
     #    """This will get called when the bot sees someone do an action."""
@@ -98,6 +67,36 @@ class LogBot(irc.IRCClient):
         """This will get called when the bot joins the channel."""
         self.logger.log("[I have joined %s]" % channel)
 
+
+class CurryBot(BasicBot):
+
+    def __init__(self):
+        self.nickname = "currybot"
+        self.fn = "data.txt"
+        if os.path.exists(self.fn):
+            f = open(self.fn, 'rb')
+            self.curryites = pickle.load(f)
+            f.close()
+        else:
+            self.curryites = {}
+
+    def _write_data(self):
+        f = open(self.fn, 'wb')
+        pickle.dump(self.curryites, f, 2)
+        f.flush()
+        f.close()
+
+    @property
+    def menu(self):
+
+        try:
+            return self._menu
+        except AttributeError, e:
+            self._menu = CurryMenu()
+            self._menu.load()
+
+        return self._menu
+
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
@@ -106,6 +105,7 @@ class LogBot(irc.IRCClient):
         # Check to see if they're sending me a private message
         if channel == self.nickname:
             msg = "It isn't nice to whisper!  Play nice with the group."
+            # TODO: whispering should be allowed
             self.msg(user, msg)
             return
 
@@ -172,6 +172,10 @@ class LogBot(irc.IRCClient):
                         self.curryites.keys()[-1] ))
                 return
 
+            if command == 'checkpriv':
+                self.msg('ftobia', 'hey how are you today?')
+                return
+
             try:
                 item = self.menu[command]
                 if item.summary == 'NONE':
@@ -187,14 +191,14 @@ class LogBot(irc.IRCClient):
             # self.logger.log("<%s> %s" % (self.nickname, msg))
 
 
-class LogBotFactory(protocol.ClientFactory):
-    """A factory for LogBots.
+class BotFactory(protocol.ClientFactory):
+    """A factory for Bots.
 
     A new protocol instance will be created each time we connect to the server.
     """
 
     # the class of the protocol to build when new connection is made
-    protocol = LogBot
+    protocol = CurryBot
 
     def __init__(self, channel, filename):
         self.channel = channel
