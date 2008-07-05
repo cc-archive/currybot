@@ -6,6 +6,8 @@ from twisted.python import log
 import time
 import os
 import cPickle as pickle
+import signal
+import datetime
 
 from currybot.currymenu import CurryMenu
 
@@ -73,6 +75,8 @@ class CurryBot(BasicBot):
     def __init__(self):
         self.nickname = "currybot"
         self.fn = "data.txt"
+        self.TIMESTEP = 5 * 60 # five minutes, in seconds
+        self._time_init()
         if os.path.exists(self.fn):
             f = open(self.fn, 'rb')
             self.curryites = pickle.load(f)
@@ -86,9 +90,35 @@ class CurryBot(BasicBot):
         f.flush()
         f.close()
 
+    def _time_init(self):
+        self.menudate = datetime.date(1970, 1, 1) # initialize to epoch
+        signal.signal(signal.SIGALRM, self.time)
+        signal.alarm(self.TIMESTEP)
+
+    def time(self, signum, stackframe):
+        """To be called when interrupted by SIG_ALRM. Does various 
+           things at specific times, like reloading the curry menu.
+           Takes extra arguments per signal.signal"""
+        # if it's the next day, get new menu
+        if self.menudate < datetime.date.today():
+            self._reload_menu()
+            self.menudate = datetime.date.today()
+
+        # if it's 11am - 11:59am, send reminders
+        if time.localtime()[3] == 11:
+            self.currynotify()
+
+        # save state, for good measure
+        self._write_data()
+
+        # remember to reset alarm
+        signal.alarm(self.TIMESTEP)
+
+        # DEBUG
+        self.msg('ftobia', time.localtime())
+
     @property
     def menu(self):
-
         try:
             return self._menu
         except AttributeError, e:
@@ -96,6 +126,20 @@ class CurryBot(BasicBot):
             self._menu.load()
 
         return self._menu
+
+    def _reload_menu(self):
+        try:
+            del self._menu
+        except:
+            pass
+
+        self.menu
+
+    def currynotify(self):
+        # TODO: only notify once every day
+        # send private message to each curryite
+        for nick in self.curryites:
+            self.msg(nick, "It's curry time!")
 
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
