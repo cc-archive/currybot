@@ -94,6 +94,7 @@ class CurryBot(BasicBot):
         self.menudate = datetime.date(1970, 1, 1) # initialize to epoch
         signal.signal(signal.SIGALRM, self.time)
         signal.alarm(self.TIMESTEP)
+        self.already_notified = False # TODO: make it reset every day
 
     def time(self, signum, stackframe):
         """To be called when interrupted by SIG_ALRM. Does various 
@@ -114,9 +115,6 @@ class CurryBot(BasicBot):
         # remember to reset alarm
         signal.alarm(self.TIMESTEP)
 
-        # DEBUG
-        self.msg('ftobia', time.localtime())
-
     @property
     def menu(self):
         try:
@@ -136,10 +134,12 @@ class CurryBot(BasicBot):
         self.menu
 
     def currynotify(self):
-        # TODO: only notify once every day
         # send private message to each curryite
-        for nick in self.curryites:
-            self.msg(nick, "It's curry time!")
+        if not self.already_notified:
+            for nick in self.curryites:
+                self.msg(nick, "It's almost time for curry! You'd better check the menu.")
+                self.msg(nick, "Let Frank know if you think it would be helpful to get the menu automatically sent at this time. Discussion will ensue.")
+            self.already_notified = True
 
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
