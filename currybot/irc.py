@@ -126,19 +126,16 @@ class CurryBot(BasicBot):
         return self._menu
 
     def _reload_menu(self):
-        try:
-            del self._menu
-        except:
-            pass
-
-        self.menu
+        self._menu = CurryMenu()
+        self._menu.load()
 
     def currynotify(self):
         # send private message to each curryite
         if not self.already_notified:
             for nick in self.curryites:
-                self.msg(nick, "It's almost time for curry! You'd better check the menu.")
-                self.msg(nick, "Let Frank know if you think it would be helpful to get the menu automatically sent at this time. Discussion will ensue.")
+                self.msg(nick, "It's almost time for curry!")
+                #self.command_list(nick) # too many messages!
+                time.sleep(5) # fix "excess flood" bug (hopefully)
             self.already_notified = True
 
     def privmsg(self, user, channel, msg):
@@ -166,13 +163,7 @@ class CurryBot(BasicBot):
                 return
 
             if command == 'list':
-                try:
-                    for i in range(1,10):
-                        item = self.menu[i]
-                        self.msg(channel, '(%d) %s (%s)' %
-                                  (i, item.title, item.summary))
-                except KeyError:
-                    return
+                self.command_list(channel)
                 return
 
             if command == 'register':
@@ -233,6 +224,15 @@ class CurryBot(BasicBot):
                 self.msg(channel, "%s: mmm... curry..." % user)
 
             # self.logger.log("<%s> %s" % (self.nickname, msg))
+
+    def command_list(self, channel):
+         try:
+             for i in range(1,10):
+                 item = self.menu[i]
+                 self.msg(channel, '(%d) %s (%s)' %
+                                   (i, item.title, item.summary))
+         except KeyError:
+             pass
 
 
 class BotFactory(protocol.ClientFactory):
