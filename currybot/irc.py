@@ -100,10 +100,8 @@ class CurryBot(BasicBot):
         """To be called when interrupted by SIG_ALRM. Does various 
            things at specific times, like reloading the curry menu.
            Takes extra arguments per signal.signal"""
-        # if it's the next day, get new menu
-        if self.menudate < datetime.date.today():
-            self._reload_menu()
-            self.menudate = datetime.date.today()
+        # just keep reloading the menu every five minutes
+        self._reload_menu()
 
         # if it's 11am - 11:59am, send reminders
         if time.localtime()[3] == 11:
